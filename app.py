@@ -1,4 +1,5 @@
 import streamlit as st
+from src.utils.pdf_utils import extract_text_from_pdf
 
 st.set_page_config(
     page_title="AI Career & Placement Assistant",
@@ -79,9 +80,25 @@ elif page == "📄 Resume Analysis":
         st.write("**File name:**", uploaded_resume.name)
         st.write("**File size:**", f"{uploaded_resume.size / 1024:.2f} KB")
 
-        st.info(
-            "Resume processing will be added in the upcoming days."
-        )
+        # Extract text from PDF
+        resume_text = extract_text_from_pdf(uploaded_resume)
+        st.session_state["resume_text"]=resume_text
+        st.caption(f"Resume text stored: {len(resume_text)} characters")
+
+        if resume_text.strip():
+            st.success("✅ Resume text extracted successfully!")
+
+            with st.expander("📄 View Extracted Resume Text"):
+                st.text_area(
+                    "Extracted Text",
+                    resume_text,
+                    height=500
+               )
+        else:
+            st.warning(
+                "⚠️ No text could be extracted from this PDF. "
+                "It may be a scanned/image-based PDF."
+           )
 
 elif page == "💼 Job Description":
     st.header("💼 Job Description")
