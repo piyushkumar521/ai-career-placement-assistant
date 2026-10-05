@@ -1,5 +1,6 @@
 import streamlit as st
 from src.utils.pdf_utils import extract_text_from_pdf
+from src.utils.text_utils import clean_resume_text
 
 st.set_page_config(
     page_title="AI Career & Placement Assistant",
@@ -7,7 +8,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# Sidebar
 st.sidebar.title("🎯 Career Assistant")
 
 page = st.sidebar.radio(
@@ -21,6 +21,11 @@ page = st.sidebar.radio(
         "🎤 Interview Assistant"
     ]
 )
+
+# Developer / User information
+st.sidebar.divider()
+st.sidebar.markdown("### 👨‍💻 PIYUSH KUMAR YADAV")
+st.sidebar.caption("AI/ML Engineer")
 
 # Main content
 st.title("🎯 AI Career & Placement Assistant")
@@ -82,16 +87,89 @@ elif page == "📄 Resume Analysis":
 
         # Extract text from PDF
         resume_text = extract_text_from_pdf(uploaded_resume)
-        st.session_state["resume_text"]=resume_text
-        st.caption(f"Resume text stored: {len(resume_text)} characters")
+        # clean text
+        cleaned_resume_text = clean_resume_text(resume_text)
+        st.caption(
+            f"Raw Characters: {len(resume_text)} | "
+            f"CLeaned characters: {len(cleaned_resume_text)}"
+        )
+        
+        # store clean text 
+        st.session_state["resume_text"] = cleaned_resume_text
+        word_count = len(cleaned_resume_text.split())
+        line_count = len(cleaned_resume_text.splitlines())
+        
+        skills = [
+            "Python",
+            "Machine Learning",
+            "Deep Learning",
+            "SQL",
+            "Generative AI",
+            "LLM",
+            "RAG",
+            "LangChain",
+            "LangGraph",
+            "Docker",
+            "Streamlit",
+            "FastAPI"
+       ]
+
+        detected_skills = []
+
+        for skill in skills:
+            normalized_text = cleaned_resume_text.lower()
+            normalized_text = normalized_text.replace("-", " ")
+
+        for skill in skills:
+            normalized_skill = skill.lower().replace("-", " ")
+
+            if normalized_skill in normalized_text:
+                detected_skills.append(skill)
+            
+        st.subheader("🛠️ Detected Skills")
+        if detected_skills:
+            st.success(", ".join(detected_skills))
+        else:
+            st.info("No predefined skills detected.")
+            
+        st.divider()
+        st.subheader("📊 Resume Summary")
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.metric("📝 Words", word_count)
+
+        with col2:
+            st.metric("🛠️ Skills Detected", len(detected_skills))
+
+        with col3:
+            st.metric("📄 Pages", "PDF")
+        
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.metric("📝 Word Count", word_count)
+
+        with col2:
+            st.metric("📄 Lines", line_count)
+        st.caption(f"Resume text stored: {len(cleaned_resume_text)} characters")
+        
+        st.divider()
+        if word_count >= 300 and len(detected_skills) >= 3:
+            st.success("🟢 Resume has sufficient content for further AI analysis.")
+        elif word_count > 0:
+            st.warning("🟡 Resume uploaded, but more content may be needed.")
+        else:
+            st.error("🔴 Resume text could not be analyzed.")
 
         if resume_text.strip():
-            st.success("✅ Resume text extracted successfully!")
-
+            st.success("✅ Resume text extracted successfully!")    
+            
             with st.expander("📄 View Extracted Resume Text"):
                 st.text_area(
                     "Extracted Text",
-                    resume_text,
+                    cleaned_resume_text,
                     height=500
                )
         else:
@@ -99,6 +177,7 @@ elif page == "📄 Resume Analysis":
                 "⚠️ No text could be extracted from this PDF. "
                 "It may be a scanned/image-based PDF."
            )
+            
 
 elif page == "💼 Job Description":
     st.header("💼 Job Description")
