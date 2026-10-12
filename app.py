@@ -814,6 +814,11 @@ elif page == "🎤 Interview Assistant":
                        f"**Question Type:** "
                        f"{evaluation.get('question_type', 'Not available')}"
                     )
+                    
+                    st.write(
+                        f"**Topic:** "
+                        f"{evaluation.get('topic_name', 'General')}"
+                    )
                 
                     st.write(
                         f"**Word count:** {evaluation.get('word_count', 0)}"

@@ -2,6 +2,82 @@
 import re
 
 
+def get_topic_guidance(question="", topic="", category=""):
+    """Return rule-based guidance for common technical topics."""
+    text = f"{question} {topic} {category}".lower()
+
+    topic_rules = [
+        (
+            [
+                "python", "list", "tuple", "dictionary", "dict", "set",
+                "function", "exception", "oop", "class", "inheritance",
+            ],
+            "Python",
+            [
+                "Explain the relevant Python concept and its syntax.",
+                "Mention an important property or difference from related concepts.",
+                "Include a short Python code example and explain its output.",
+            ],
+        ),
+        (
+            [
+                "sql", "database", "join", "where", "having", "group by",
+                "primary key", "foreign key", "query",
+            ],
+            "SQL",
+            [
+                "Explain the SQL clause or database concept clearly.",
+                "Describe when it is used and how it differs from related concepts.",
+                "Include a small SQL query and explain the expected result.",
+            ],
+        ),
+        (
+            [
+                "machine learning", "overfitting", "underfitting",
+                "regression", "classification", "random forest",
+                "decision tree", "precision", "recall", "f1 score",
+                "feature engineering", "supervised learning",
+                "unsupervised learning",
+            ],
+            "Machine Learning",
+            [
+                "Define the concept and explain how it works.",
+                "Describe a suitable use case, limitation, or trade-off.",
+                "Give an example and mention a relevant evaluation method when appropriate.",
+            ],
+        ),
+        (
+            [
+                "deep learning", "neural network", "backpropagation",
+                "activation function", "epoch", "gradient descent",
+                "cnn", "rnn", "transformer", "loss function",
+            ],
+            "Deep Learning",
+            [
+                "Explain the neural-network concept and its purpose.",
+                "Describe the main mechanism or training process.",
+                "Give an application and mention a relevant limitation when appropriate.",
+            ],
+        ),
+    ]
+
+    for keywords, topic_name, guidance in topic_rules:
+        if any(keyword in text for keyword in keywords):
+            return {
+                "topic_name": topic_name,
+                "guidance": guidance,
+            }
+
+    return {
+        "topic_name": "General",
+        "guidance": [
+            "Define the main concept clearly.",
+            "Explain how it works and why it is useful.",
+            "Include a practical example and mention a limitation when relevant.",
+        ],
+    }
+
+
 def detect_question_type(question="", topic="", category=""):
     """Classify questions using simple, transparent keyword rules."""
     text = f"{question} {topic} {category}".lower()
@@ -32,10 +108,12 @@ def detect_question_type(question="", topic="", category=""):
 
 def evaluate_answer(answer, question="", topic="", category=""):
     """
-    Evaluate answer structure with transparent rules.
-    This is not a semantic correctness or AI evaluation.
+    Evaluate answer structure using transparent rules.
+
+    This is a practice aid, not a semantic correctness or AI evaluation.
     """
     question_type = detect_question_type(question, topic, category)
+    topic_result = get_topic_guidance(question, topic, category)
 
     if not isinstance(answer, str):
         answer = ""
@@ -58,12 +136,16 @@ def evaluate_answer(answer, question="", topic="", category=""):
             "Conclude with a benefit, limitation, or technical trade-off.",
         ]
 
+        # Add topic-specific suggestions for technical questions.
+        suggested_structure.extend(topic_result["guidance"])
+
     if not answer:
         return {
             "score": 0,
             "level": "No answer",
             "word_count": 0,
             "question_type": question_type,
+            "topic_name": topic_result["topic_name"],
             "strengths": [],
             "improvements": [
                 "Write an answer before requesting an evaluation."
@@ -73,6 +155,7 @@ def evaluate_answer(answer, question="", topic="", category=""):
 
     words = re.findall(r"\b[\w+#.-]+\b", answer)
     word_count = len(words)
+
     sentences = [
         sentence.strip()
         for sentence in re.split(r"[.!?]+", answer)
@@ -87,10 +170,14 @@ def evaluate_answer(answer, question="", topic="", category=""):
     # 1. Completeness
     if word_count >= 80:
         score += 30
-        strengths.append("Your answer provides a reasonable amount of detail.")
+        strengths.append(
+            "Your answer provides a reasonable amount of detail."
+        )
     elif word_count >= 40:
         score += 22
-        strengths.append("Your answer has a useful starting level of detail.")
+        strengths.append(
+            "Your answer has a useful starting level of detail."
+        )
     elif word_count >= 20:
         score += 14
         improvements.append(
@@ -105,23 +192,39 @@ def evaluate_answer(answer, question="", topic="", category=""):
     # 2. Structure
     if len(sentences) >= 4:
         score += 20
-        strengths.append("Your answer uses several sentences to explain the idea.")
+        strengths.append(
+            "Your answer uses several sentences to explain the idea."
+        )
     elif len(sentences) >= 2:
         score += 14
-        strengths.append("Your answer has some explanatory structure.")
+        strengths.append(
+            "Your answer has some explanatory structure."
+        )
     else:
         score += 5
-        improvements.append("Organize your answer into a few clear sentences.")
+        improvements.append(
+            "Organize your answer into a few clear sentences."
+        )
 
     # 3. Question-type-specific evidence
     if question_type == "Behavioral":
         star_indicators = {
-            "situation": ["at my", "during", "when i", "in my"],
-            "task": ["my task", "i was responsible", "my responsibility", "goal was"],
-            "action": ["i decided", "i implemented", "i developed", "i coordinated",
-                       "i analyzed", "i created", "i worked", "i took"],
-            "result": ["as a result", "the result", "we achieved", "this improved",
-                       "i learned", "outcome", "%"],
+            "situation": [
+                "at my", "during", "when i", "in my",
+            ],
+            "task": [
+                "my task", "i was responsible",
+                "my responsibility", "goal was",
+            ],
+            "action": [
+                "i decided", "i implemented", "i developed",
+                "i coordinated", "i analyzed", "i created",
+                "i worked", "i took",
+            ],
+            "result": [
+                "as a result", "the result", "we achieved",
+                "this improved", "i learned", "outcome", "%",
+            ],
         }
 
         found_sections = [
@@ -141,6 +244,7 @@ def evaluate_answer(answer, question="", topic="", category=""):
                 for section in ["situation", "task", "action", "result"]
                 if section not in found_sections
             ]
+
             improvements.append(
                 "Strengthen the STAR structure. Add or clarify: "
                 + ", ".join(missing_sections)
@@ -161,24 +265,28 @@ def evaluate_answer(answer, question="", topic="", category=""):
             )
 
     else:
+        # 4. Examples and applications
         example_phrases = [
             "for example", "for instance", "such as",
             "in practice", "in a project", "we can use",
-            "used to", "application"
+            "used to", "application",
         ]
 
         if any(phrase in answer_lower for phrase in example_phrases):
             score += 25
-            strengths.append("You included an example or practical application.")
+            strengths.append(
+                "You included an example or practical application."
+            )
         else:
             improvements.append(
                 "Include a practical example or real-world application."
             )
 
+        # 5. Explanation and reasoning
         reasoning_phrases = [
             "because", "therefore", "however", "which means",
             "as a result", "the reason", "in contrast",
-            "this helps", "this allows"
+            "this helps", "this allows",
         ]
 
         if any(phrase in answer_lower for phrase in reasoning_phrases):
@@ -191,7 +299,7 @@ def evaluate_answer(answer, question="", topic="", category=""):
                 "Explain why the concept works and when it is useful."
             )
 
-    # Keep scores capped for short answers.
+    # Limit scores for answers that are too short.
     score = min(score, 100)
 
     if word_count < 20:
@@ -220,6 +328,7 @@ def evaluate_answer(answer, question="", topic="", category=""):
         "level": level,
         "word_count": word_count,
         "question_type": question_type,
+        "topic_name": topic_result["topic_name"],
         "strengths": strengths,
         "improvements": improvements,
         "suggested_structure": suggested_structure,

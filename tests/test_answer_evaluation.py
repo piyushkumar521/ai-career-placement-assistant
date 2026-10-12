@@ -94,3 +94,79 @@ def test_technical_answer_gets_technical_structure():
         "definition" in item.lower()
         for item in result["suggested_structure"]
     )
+
+
+from src.utils.answer_evaluation_utils import (
+    get_topic_guidance,
+    evaluate_answer,
+)
+
+
+def test_python_topic_guidance():
+    result = get_topic_guidance(
+        question="What is a Python list?"
+    )
+    assert result["topic_name"] == "Python"
+    assert len(result["guidance"]) == 3
+
+
+def test_sql_topic_guidance():
+    result = get_topic_guidance(
+        question="Explain SQL joins."
+    )
+    assert result["topic_name"] == "SQL"
+    assert len(result["guidance"]) == 3
+
+
+def test_machine_learning_topic_guidance():
+    result = get_topic_guidance(
+        question="What is overfitting?"
+    )
+    assert result["topic_name"] == "Machine Learning"
+    assert len(result["guidance"]) == 3
+
+
+def test_deep_learning_topic_guidance():
+    result = get_topic_guidance(
+        question="Explain a neural network."
+    )
+    assert result["topic_name"] == "Deep Learning"
+    assert len(result["guidance"]) == 3
+
+
+def test_general_topic_guidance():
+    result = get_topic_guidance(
+        question="Tell me about your interests."
+    )
+    assert result["topic_name"] == "General"
+    assert len(result["guidance"]) == 3
+
+
+def test_evaluation_includes_topic_name():
+    result = evaluate_answer(
+        answer="Overfitting occurs when a model learns training data too closely.",
+        question="What is overfitting?",
+        topic="Machine Learning",
+    )
+    assert result["topic_name"] == "Machine Learning"
+
+
+def test_empty_answer_includes_topic_name():
+    result = evaluate_answer(
+        answer="",
+        question="Explain SQL joins.",
+        topic="SQL",
+    )
+    assert result["topic_name"] == "SQL"
+
+
+def test_behavioral_question_keeps_star_structure():
+    result = evaluate_answer(
+        answer="I worked on a college project and solved a difficult problem.",
+        question="Tell me about a time you solved a problem.",
+    )
+    assert result["question_type"] == "Behavioral"
+    assert any(
+        item.startswith("Situation:")
+        for item in result["suggested_structure"]
+    )
