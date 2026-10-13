@@ -124,6 +124,87 @@ ROLE_QUESTIONS = {
 }
 
 
+DIFFICULTY_QUESTIONS = {
+    "Beginner": {
+        "python": [
+            "What are variables and data types in Python?",
+            "How does a for loop work in Python?",
+        ],
+        "sql": [
+            "What is a primary key in SQL?",
+            "How do SELECT and WHERE work together?",
+        ],
+        "machine learning": [
+            "What is a machine learning model?",
+            "Why do we split data into training and testing sets?",
+        ],
+        "deep learning": [
+            "What is a neural network?",
+            "What is an activation function?",
+        ],
+        "generative ai": [
+            "What is Generative AI? Give one example.",
+            "What is a prompt in Generative AI?",
+        ],
+        "llm": [
+            "What is an LLM, and what kinds of tasks can it perform?",
+            "What is a token in a language model?",
+        ],
+    },
+    "Intermediate": {
+        "python": [
+            "How would you improve the time and memory efficiency of Python code?",
+            "When would you use a generator instead of a list?",
+        ],
+        "sql": [
+            "How would you use a window function to rank employees by salary?",
+            "How would you identify duplicate records using SQL?",
+        ],
+        "machine learning": [
+            "How would you detect and reduce overfitting in a classification model?",
+            "How would you choose between precision, recall, and F1 score?",
+        ],
+        "deep learning": [
+            "How do batch size and learning rate affect model training?",
+            "How can dropout help reduce overfitting?",
+        ],
+        "generative ai": [
+            "How would you improve the reliability of an LLM response?",
+            "When would you use retrieval-augmented generation?",
+        ],
+        "llm": [
+            "How do temperature and context length affect LLM responses?",
+            "How would you evaluate an LLM-powered application?",
+        ],
+    },
+    "Advanced": {
+        "python": [
+            "How would you profile and optimize a memory-intensive Python service?",
+            "How would you design a concurrent Python pipeline with safe shared state?",
+        ],
+        "sql": [
+            "How would you diagnose a query execution plan with expensive joins?",
+            "How would you design indexes for a high-volume analytical workload?",
+        ],
+        "machine learning": [
+            "How would you diagnose data leakage in a production ML pipeline?",
+            "How would you design a reliable evaluation strategy under distribution shift?",
+        ],
+        "deep learning": [
+            "How would you diagnose vanishing or exploding gradients in a deep network?",
+            "How would you optimize training when GPU memory is the main bottleneck?",
+        ],
+        "generative ai": [
+            "How would you evaluate hallucination rates in a production RAG system?",
+            "How would you mitigate prompt injection in a document-grounded assistant?",
+        ],
+        "llm": [
+            "How would you compare fine-tuning with RAG for a changing knowledge base?",
+            "How would you evaluate and reduce hallucinations in a high-stakes LLM workflow?",
+        ],
+    },
+}
+
 def generate_interview_questions(
     target_role,
     resume_skills,
@@ -131,34 +212,66 @@ def generate_interview_questions(
     missing_skills,
     categories,
     num_questions=10,
+    difficulty="Intermediate",
 ):
-    """Generate a reproducible-style practice set from available skill data."""
-    target_role = target_role.strip() or "General Technical Role"
+    """Generate interview questions using skills, role, and difficulty."""
 
-    # Prioritize missing skills, then skills mentioned in the job description
-    # and resume.
+    target_role = (target_role or "").strip() or "General Technical Role"
+
+    valid_difficulties = {"Beginner", "Intermediate", "Advanced"}
+    if difficulty not in valid_difficulties:
+        difficulty = "Intermediate"
+
+    # Prioritize missing skills, then job requirements, then resume skills.
     skill_order = []
     for skill in list(missing_skills) + list(required_skills) + list(resume_skills):
-        normalized = skill.strip().lower()
+        normalized = str(skill).strip().lower()
         if normalized and normalized not in skill_order:
             skill_order.append(normalized)
 
+
     pool = []
+
+    difficulty_bank = DIFFICULTY_QUESTIONS.get(
+        difficulty,
+        DIFFICULTY_QUESTIONS["Intermediate"],
+    )
+
     for skill in skill_order:
+        # Include the original questions for this skill.
         for category, question in SKILL_QUESTIONS.get(skill, []):
             if not categories or category in categories:
                 pool.append({
                     "question": question,
                     "topic": skill.title(),
                     "category": category,
+                    "difficulty": difficulty,
                 })
 
+        # Add questions specifically written for the selected difficulty.
+        for question in difficulty_bank.get(skill, []):
+            pool.append({
+                "question": question,
+                "topic": skill.title(),
+                "category": "Practical",
+                "difficulty": difficulty,
+            })
+
+
+
     role = target_role.lower()
-    if any(term in role for term in ["ece", "electronics", "embedded", "vlsi", "hardware"]):
+
+    if any(term in role for term in [
+        "ece", "electronics", "embedded", "vlsi", "hardware"
+    ]):
         role_questions = ROLE_QUESTIONS["ece"]
-    elif any(term in role for term in ["software", "developer", "programmer", "backend"]):
+    elif any(term in role for term in [
+        "software", "developer", "programmer", "backend"
+    ]):
         role_questions = ROLE_QUESTIONS["software"]
-    elif any(term in role for term in ["data", "machine learning", "ai", "ml"]):
+    elif any(term in role for term in [
+        "data", "machine learning", "ai", "ml"
+    ]):
         role_questions = ROLE_QUESTIONS["data"]
     else:
         role_questions = ROLE_QUESTIONS["general"]
@@ -169,29 +282,37 @@ def generate_interview_questions(
                 "question": question,
                 "topic": target_role,
                 "category": "Role-specific",
+                "difficulty": difficulty,
             })
 
-    # Add general questions to ensure there are enough questions to choose from.
+    # Add general questions as a fallback.
     for question in ROLE_QUESTIONS["general"]:
         pool.append({
             "question": question,
             "topic": "General Interview",
             "category": "General",
+            "difficulty": difficulty,
         })
 
     # Remove duplicate questions while preserving order.
     unique_pool = []
     seen = set()
+
     for item in pool:
         if item["question"] not in seen:
             unique_pool.append(item)
             seen.add(item["question"])
 
     random.shuffle(unique_pool)
+
     selected = unique_pool[:max(1, min(int(num_questions), len(unique_pool)))]
 
-    # Put questions about skill gaps first.
-    missing = {skill.lower() for skill in missing_skills}
-    selected.sort(key=lambda item: 0 if item["topic"].lower() in missing else 1)
+    # Put missing-skill questions first.
+    missing = {str(skill).strip().lower() for skill in missing_skills}
+    selected.sort(
+        key=lambda item: (
+            0 if item["topic"].strip().lower() in missing else 1
+        )
+    )
 
     return selected

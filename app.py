@@ -726,6 +726,14 @@ elif page == "🎤 Interview Assistant":
         value=10,
         key="interview_num_questions",
     )
+    
+    difficulty = st.selectbox(
+        "Question Difficulty",
+        ["Beginner", "Intermediate", "Advanced"],
+        index=1,
+        help="Choose the difficulty level for your interview practice.",
+    )
+    
 
     if st.button("🚀 Generate Interview Questions", type="primary"):
         if not target_role.strip():
@@ -744,6 +752,7 @@ elif page == "🎤 Interview Assistant":
                 missing_skills=missing_skills,
                 categories=categories,
                 num_questions=num_questions,
+                difficulty=difficulty,
             )
 
             st.session_state["generated_interview_questions"] = questions
@@ -765,6 +774,9 @@ elif page == "🎤 Interview Assistant":
             with st.expander(
                 f"Q{index}. [{item['category']}] {item['topic']}"
             ):
+                st.caption(
+                    f"Difficulty: {item.get('difficulty', 'Intermediate')}"
+                )
                 st.write(item["question"])
 
                 answer_key = f"interview_answer_{index}"
