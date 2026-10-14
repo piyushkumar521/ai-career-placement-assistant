@@ -95,6 +95,13 @@ def detect_question_type(question="", topic="", category=""):
         "how have you dealt with",
         "a challenge you faced",
         "a problem you solved",
+        "tell me about yourself",
+        "what was your biggest achievement",
+        "describe a difficult decision",
+        "how did you resolve",
+        "how did you motivate",
+        "give an example of when",
+        "what would you do if",
     ]
 
     if any(phrase in text for phrase in behavioral_phrases):

@@ -205,3 +205,20 @@ def test_empty_answer_returns_missing_concepts():
 
     assert "missing_concepts" in result
     assert isinstance(result["missing_concepts"], list)
+    
+    
+
+def test_detect_behavioral_question_about_teamwork():
+    question = "How did you handle a disagreement with a teammate?"
+    assert detect_question_type(question) == "Behavioral"
+
+
+def test_detect_behavioral_question_about_failure():
+    question = "Describe a failure and what you learned from it."
+    assert detect_question_type(question) == "Behavioral"
+
+
+def test_detect_behavioral_question_about_leadership():
+    question = "Give me an example of your leadership skills."
+    assert detect_question_type(question) == "Behavioral"
+
