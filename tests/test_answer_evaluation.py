@@ -170,3 +170,38 @@ def test_behavioral_question_keeps_star_structure():
         item.startswith("Situation:")
         for item in result["suggested_structure"]
     )
+
+
+def test_random_forest_missing_concepts_detected():
+    result = evaluate_answer(
+        answer="A random forest combines models to make predictions.",
+        question="Explain how a random forest works.",
+        topic="Machine Learning",
+    )
+
+    assert "decision tree" in result["missing_concepts"]
+    assert "ensemble" in result["missing_concepts"]
+    assert "overfitting" in result["missing_concepts"]
+
+
+def test_missing_concepts_are_included_in_feedback():
+    result = evaluate_answer(
+        answer="A random forest makes predictions using multiple models.",
+        question="Explain how a random forest works.",
+        topic="Machine Learning",
+    )
+
+    feedback = " ".join(result["improvements"])
+
+    assert "Consider covering these concepts" in feedback
+
+
+def test_empty_answer_returns_missing_concepts():
+    result = evaluate_answer(
+        answer="",
+        question="Explain SQL joins.",
+        topic="SQL",
+    )
+
+    assert "missing_concepts" in result
+    assert isinstance(result["missing_concepts"], list)

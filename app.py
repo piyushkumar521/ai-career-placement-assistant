@@ -848,6 +848,22 @@ elif page == "🎤 Interview Assistant":
                     st.write("**Areas to improve**")
                     for improvement in evaluation.get("improvements", []):
                         st.write(f"📌 {improvement}")
+                        
+                    st.write("**Missing Concepts to Consider**")
+                    missing_concepts = evaluation.get(
+                        "missing_concepts", []
+                    )
+
+                    if missing_concepts:
+                        for concept in missing_concepts:
+                            st.write(f"🔎 {concept}")
+                    else:
+                        st.write(
+                            "No missing concepts detected by the "
+                            "current keyword rules."
+                        )
+                    
+                        
 
                     st.write("**Suggested answer structure**")
                     for point in evaluation.get("suggested_structure", []):

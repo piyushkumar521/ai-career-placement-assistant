@@ -63,10 +63,7 @@ def get_topic_guidance(question="", topic="", category=""):
 
     for keywords, topic_name, guidance in topic_rules:
         if any(keyword in text for keyword in keywords):
-            return {
-                "topic_name": topic_name,
-                "guidance": guidance,
-            }
+            return {"topic_name": topic_name, "guidance": guidance}
 
     return {
         "topic_name": "General",
@@ -79,7 +76,7 @@ def get_topic_guidance(question="", topic="", category=""):
 
 
 def detect_question_type(question="", topic="", category=""):
-    """Classify questions using simple, transparent keyword rules."""
+    """Classify questions using transparent keyword rules."""
     text = f"{question} {topic} {category}".lower()
 
     behavioral_phrases = [
@@ -104,6 +101,37 @@ def detect_question_type(question="", topic="", category=""):
         return "Behavioral"
 
     return "Technical"
+
+
+def detect_missing_concepts(answer, question="", topic=""):
+    """
+    Identify expected keywords missing from an answer.
+
+    This is a simple keyword check, not a semantic correctness evaluation.
+    """
+    text = f"{question} {topic}".lower()
+    answer_lower = answer.lower() if isinstance(answer, str) else ""
+
+    concept_rules = [
+        (["random forest"], ["decision tree", "ensemble", "overfitting"]),
+        (["overfitting"], ["training data", "generalization", "validation"]),
+        (["python list"], ["ordered", "mutable", "index"]),
+        (["sql join", "joins"], ["table", "matching", "key"]),
+        (["neural network"], ["layers", "weights", "activation"]),
+    ]
+
+    expected_concepts = []
+
+    for triggers, concepts in concept_rules:
+        if any(trigger in text for trigger in triggers):
+            expected_concepts = concepts
+            break
+
+    return [
+        concept
+        for concept in expected_concepts
+        if concept not in answer_lower
+    ]
 
 
 def evaluate_answer(answer, question="", topic="", category=""):
@@ -135,8 +163,6 @@ def evaluate_answer(answer, question="", topic="", category=""):
             "Give a practical example, application, or project experience.",
             "Conclude with a benefit, limitation, or technical trade-off.",
         ]
-
-        # Add topic-specific suggestions for technical questions.
         suggested_structure.extend(topic_result["guidance"])
 
     if not answer:
@@ -151,6 +177,9 @@ def evaluate_answer(answer, question="", topic="", category=""):
                 "Write an answer before requesting an evaluation."
             ],
             "suggested_structure": suggested_structure,
+            "missing_concepts": detect_missing_concepts(
+                answer, question, topic
+            ),
         }
 
     words = re.findall(r"\b[\w+#.-]+\b", answer)
@@ -206,12 +235,10 @@ def evaluate_answer(answer, question="", topic="", category=""):
             "Organize your answer into a few clear sentences."
         )
 
-    # 3. Question-type-specific evidence
     if question_type == "Behavioral":
+        # 3. STAR indicators
         star_indicators = {
-            "situation": [
-                "at my", "during", "when i", "in my",
-            ],
+            "situation": ["at my", "during", "when i", "in my"],
             "task": [
                 "my task", "i was responsible",
                 "my responsibility", "goal was",
@@ -244,7 +271,6 @@ def evaluate_answer(answer, question="", topic="", category=""):
                 for section in ["situation", "task", "action", "result"]
                 if section not in found_sections
             ]
-
             improvements.append(
                 "Strengthen the STAR structure. Add or clarify: "
                 + ", ".join(missing_sections)
@@ -299,7 +325,7 @@ def evaluate_answer(answer, question="", topic="", category=""):
                 "Explain why the concept works and when it is useful."
             )
 
-    # Limit scores for answers that are too short.
+    # Limit scores for short answers
     score = min(score, 100)
 
     if word_count < 20:
@@ -323,6 +349,19 @@ def evaluate_answer(answer, question="", topic="", category=""):
             "Add precise details and verify that your claims are accurate."
         )
 
+    missing_concepts = detect_missing_concepts(
+        answer=answer,
+        question=question,
+        topic=topic,
+    )
+
+    if missing_concepts:
+        improvements.append(
+            "Consider covering these concepts if relevant: "
+            + ", ".join(missing_concepts)
+            + "."
+        )
+
     return {
         "score": score,
         "level": level,
@@ -332,4 +371,5 @@ def evaluate_answer(answer, question="", topic="", category=""):
         "strengths": strengths,
         "improvements": improvements,
         "suggested_structure": suggested_structure,
+        "missing_concepts": missing_concepts,
     }
