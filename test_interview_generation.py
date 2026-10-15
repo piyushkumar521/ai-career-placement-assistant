@@ -49,3 +49,18 @@ def test_question_count_is_within_requested_limit():
     questions = generate_questions("python", "Beginner")
 
     assert 1 <= len(questions) <= 10
+
+
+def test_invalid_difficulty_defaults_to_intermediate():
+    questions = generate_interview_questions(
+        target_role="AI/ML Engineer",
+        resume_skills=["python"],
+        required_skills=[],
+        missing_skills=[],
+        categories=["Fundamentals", "Practical", "Scenario", "Role-specific"],
+        num_questions=10,
+        difficulty="Expert",
+    )
+
+    assert questions
+    assert all(q["difficulty"] == "Intermediate" for q in questions)
