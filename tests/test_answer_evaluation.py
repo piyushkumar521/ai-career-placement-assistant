@@ -222,3 +222,14 @@ def test_detect_behavioral_question_about_leadership():
     question = "Give me an example of your leadership skills."
     assert detect_question_type(question) == "Behavioral"
 
+
+def test_duplicate_improvements_are_removed():
+    result = evaluate_answer(
+        answer="Python is useful.",
+        question="Explain Python.",
+    )
+
+    improvements = result["improvements"]
+
+    assert len(improvements) == len(set(improvements))
+

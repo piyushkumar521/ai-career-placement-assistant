@@ -368,6 +368,8 @@ def evaluate_answer(answer, question="", topic="", category=""):
             + ", ".join(missing_concepts)
             + "."
         )
+        # Remove duplicate feedback while preserving its original order.
+        improvements = list(dict.fromkeys(improvements))
 
     return {
         "score": score,
