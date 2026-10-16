@@ -64,3 +64,30 @@ def test_invalid_difficulty_defaults_to_intermediate():
 
     assert questions
     assert all(q["difficulty"] == "Intermediate" for q in questions)
+
+def test_none_question_count_is_handled_safely():
+    questions = generate_interview_questions(
+        target_role="AI/ML Engineer",
+        resume_skills=["python"],
+        required_skills=[],
+        missing_skills=[],
+        categories=["Fundamentals", "Practical", "Scenario", "Role-specific"],
+        num_questions=None,
+        difficulty="Intermediate",
+    )
+
+    assert questions
+
+
+def test_non_numeric_question_count_is_handled_safely():
+    questions = generate_interview_questions(
+        target_role="AI/ML Engineer",
+        resume_skills=["python"],
+        required_skills=[],
+        missing_skills=[],
+        categories=["Fundamentals", "Practical", "Scenario", "Role-specific"],
+        num_questions="abc",
+        difficulty="Intermediate",
+    )
+
+    assert questions

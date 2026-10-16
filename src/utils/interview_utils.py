@@ -305,7 +305,12 @@ def generate_interview_questions(
 
     random.shuffle(unique_pool)
 
-    selected = unique_pool[:max(1, min(int(num_questions), len(unique_pool)))]
+    try:
+        num_questions = int(num_questions)
+    except (TypeError, ValueError):
+        num_questions = 10
+
+    selected = unique_pool[:max(1, min(num_questions, len(unique_pool)))]
 
     # Put missing-skill questions first.
     missing = {str(skill).strip().lower() for skill in missing_skills}
