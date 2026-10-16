@@ -91,3 +91,29 @@ def test_non_numeric_question_count_is_handled_safely():
     )
 
     assert questions
+
+def test_zero_question_count_returns_at_least_one_question():
+    questions = generate_interview_questions(
+        target_role="AI/ML Engineer",
+        resume_skills=["python"],
+        required_skills=[],
+        missing_skills=[],
+        categories=["Fundamentals", "Practical", "Scenario", "Role-specific"],
+        num_questions=0,
+        difficulty="Intermediate",
+    )
+
+    assert questions
+
+def test_negative_question_count_returns_at_least_one_question():
+    questions = generate_interview_questions(
+        target_role="AI/ML Engineer",
+        resume_skills=["python"],
+        required_skills=[],
+        missing_skills=[],
+        categories=["Fundamentals", "Practical", "Scenario", "Role-specific"],
+        num_questions=-5,
+        difficulty="Intermediate",
+    )
+
+    assert questions
