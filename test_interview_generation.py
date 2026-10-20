@@ -115,5 +115,23 @@ def test_negative_question_count_returns_at_least_one_question():
         num_questions=-5,
         difficulty="Intermediate",
     )
+    assert questions
+def test_generated_questions_have_required_fields():
+    questions = generate_questions("python", "Intermediate")
 
     assert questions
+    required_fields = {"question", "topic", "category", "difficulty"}
+
+    for question in questions:
+        assert required_fields.issubset(question.keys())
+        assert question["question"]
+        assert question["topic"]
+        assert question["category"]
+        assert question["difficulty"]
+
+def test_generated_questions_are_unique():
+    questions = generate_questions("python", "Intermediate")
+
+    question_texts = [q["question"] for q in questions]
+
+    assert len(question_texts) == len(set(question_texts))
